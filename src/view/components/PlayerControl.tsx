@@ -9,8 +9,8 @@ import {
     faArrowsAlt,
     faMinusSquare,
 } from "@fortawesome/free-solid-svg-icons";
-import { secondsToPixels, toHHMMSS, getAmountOfSecondsAtXPos } from "../utils/Utils";
-import { PlayerState } from "../definitions";
+import { secondsToPixels, toHHMMSS, getAmountOfSecondsAtXPos } from "../../utils/Utils";
+import { PlayerState } from "../../definitions";
 
 // CSS
 // eslint-disable-next-line import/no-unassigned-import

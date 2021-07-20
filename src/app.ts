@@ -1,6 +1,6 @@
 import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
-import { CoPlayerContainerFactory, CoPlayer } from "./PlayerModel";
+import { CoPlayerContainerFactory, CoPlayer } from "./CoPlayer";
 
 // Since this is a single page fluid application we are generating a new document id
 // if one was not provided
