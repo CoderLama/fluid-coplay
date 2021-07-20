@@ -1,5 +1,5 @@
 export enum PlayerState {
-  UNSTARTED,
-  PLAYING,
-  PAUSED
+    UNSTARTED,
+    PLAYING,
+    PAUSED,
 }

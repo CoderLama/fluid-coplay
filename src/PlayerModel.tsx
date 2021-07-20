@@ -1,4 +1,3 @@
-
 import React from "react";
 import ReactDOM from "react-dom";
 import {
@@ -7,18 +6,18 @@ import {
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IFluidHTMLView } from "@fluidframework/view-interfaces";
-import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { IDirectoryValueChanged } from "@fluidframework/map";
 import { MediaPlayer } from "./components/MediaPlayer";
 import { PlayerState } from "./definitions";
 
 export interface IPlayerData {
-    playerIsMuted: boolean,
-    playerIsMaximized: boolean,
-    playerIsLoaded: boolean,
-    playerState: PlayerState,
-    lastTimeInMedia: number,
-    mediaProgress: number
+    playerIsMuted: boolean;
+    playerIsMaximized: boolean;
+    playerIsLoaded: boolean;
+    playerState: PlayerState;
+    lastTimeInMedia: number;
+    mediaProgress: number;
 }
 
 export interface ITimeSignalPayload {
@@ -26,22 +25,19 @@ export interface ITimeSignalPayload {
     isManualSeek: boolean;
 }
 
-const playerStateKey = 'playerState';
-const playerTimeInMediaKey = 'timeInMedia';
+const playerStateKey = "playerState";
+const playerTimeInMediaKey = "timeInMedia";
 
 export class CoPlayer extends DataObject implements IFluidHTMLView {
     public get IFluidHTMLView() {
         return this;
     }
 
-    static get FluidObjectName() { return "@fluid-example/CoPlay"; }
+    static get FluidObjectName() {
+        return "@fluid-example/CoPlay";
+    }
 
-    static factory = new DataObjectFactory(
-        CoPlayer.FluidObjectName,
-        CoPlayer,
-        [],
-        {},
-    );
+    static factory = new DataObjectFactory(CoPlayer.FluidObjectName, CoPlayer, [], {});
 
     protected async initializingFirstTime() {
         this.root.set(playerStateKey, {
@@ -49,7 +45,7 @@ export class CoPlayer extends DataObject implements IFluidHTMLView {
             playerIsMaximized: false,
             playerIsLoaded: false,
             playerState: PlayerState.UNSTARTED,
-            lastTimeInMedia: 0
+            lastTimeInMedia: 0,
         });
     }
 
@@ -65,15 +61,12 @@ export class CoPlayer extends DataObject implements IFluidHTMLView {
      * Will return a new Table view
      */
     public render(div: HTMLElement) {
-        ReactDOM.render(
-            <MediaPlayer model={this} />,
-            div,
-        );
+        ReactDOM.render(<MediaPlayer model={this} />, div);
         return div;
     }
 
     public updateState(newState: Partial<IPlayerData>) {
-        this.root.set(playerStateKey, {...this.getState(), ...newState});
+        this.root.set(playerStateKey, { ...this.getState(), ...newState });
     }
 
     public setState(newState: IPlayerData) {
@@ -85,25 +78,23 @@ export class CoPlayer extends DataObject implements IFluidHTMLView {
     }
 
     public onSignal = (listener: (payload: ITimeSignalPayload) => void) => {
-        this.runtime.on('signal', (message: IInboundSignalMessage, local: boolean) => {    
+        this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             if (message.type === playerTimeInMediaKey) {
                 const payload: ITimeSignalPayload = message.content;
-                
+
                 listener(payload);
             }
-
         });
-    }
+    };
 
-    public updatePlayerStateTime = (playerState) => {
-        let value: IPlayerData = {...this.getState()};
+    public updatePlayerStateTime = playerState => {
+        const value: IPlayerData = { ...this.getState() };
         // console.log('New state : [' + playerState.playerState +',' + playerState.timeInMedia + value.lastTimeInMedia + ']')
 
-        this.runtime.submitSignal(playerTimeInMediaKey,
-            {
-                timeInMedia: playerState.timeInMedia,
-                isManualSeek: playerState?.isManualSeek || false
-            });
+        this.runtime.submitSignal(playerTimeInMediaKey, {
+            timeInMedia: playerState.timeInMedia,
+            isManualSeek: playerState?.isManualSeek || false,
+        });
 
         if (value.playerState !== playerState.playerState) {
             value.playerState = playerState.playerState;
@@ -112,10 +103,10 @@ export class CoPlayer extends DataObject implements IFluidHTMLView {
             }
             this.setState(value);
         }
-    }
+    };
 }
 
 export const CoPlayerContainerFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
     CoPlayer.factory,
     [[CoPlayer.FluidObjectName, Promise.resolve(CoPlayer.factory)]]
-  );
+);
