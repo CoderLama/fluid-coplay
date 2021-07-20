@@ -1,7 +1,3 @@
-/*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License.
- */
 
 import { getTinyliciousContainer } from "@fluidframework/get-tinylicious-container";
 import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
