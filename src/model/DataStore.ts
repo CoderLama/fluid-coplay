@@ -4,13 +4,13 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDirectory, IDirectoryValueChanged } from "@fluidframework/map";
 import { PlayerState } from "../definitions";
 
-export interface IPlayerData {
-    playerIsMuted: boolean;
-    playerIsMaximized: boolean;
-    playerIsLoaded: boolean;
-    playerState: PlayerState;
-    lastTimeInMedia: number;
-    mediaProgress: number;
+export enum DataStoreKeys {
+    playerIsMuted = "playerIsMuted",
+    playerIsMaximized = "playerIsMaximized",
+    playerIsLoaded = "playerIsLoaded",
+    playerState = "playerState",
+    lastTimeInMedia = "lastTimeInMedia",
+    mediaProgress = "mediaProgress",
 }
 
 export interface ITimeSignalPayload {
@@ -18,7 +18,6 @@ export interface ITimeSignalPayload {
     isManualSeek: boolean;
 }
 
-const playerStateKey = "playerState";
 const playerTimeInMediaKey = "timeInMedia";
 
 export class DataStore extends EventEmitter {
@@ -34,33 +33,27 @@ export class DataStore extends EventEmitter {
     }
 
     public initializingFirstTime() {
-        this.sharedStore.set(playerStateKey, {
-            playerIsMuted: false,
-            playerIsMaximized: false,
-            playerIsLoaded: false,
-            playerState: PlayerState.UNSTARTED,
-            lastTimeInMedia: 0,
-        });
+        this.updateDataStore(DataStoreKeys.playerIsMuted, false);
+        this.updateDataStore(DataStoreKeys.playerIsMaximized, false);
+        this.updateDataStore(DataStoreKeys.playerIsLoaded, false);
+        this.updateDataStore(DataStoreKeys.playerState, PlayerState.UNSTARTED);
+        this.updateDataStore(DataStoreKeys.lastTimeInMedia, 0);
     }
 
-    public listenToDataChange() {
+    public onDataChange(callback: (dataKey: DataStoreKeys, value: any) => void) {
         this.sharedStore.on("valueChanged", (changed: IDirectoryValueChanged) => {
-            if (changed.key === playerStateKey) {
-                this.emit("playerStateChanged", this.getState());
-            }
+            const dataKey = DataStoreKeys[changed.key as keyof typeof DataStoreKeys];
+            callback(dataKey, this.getDataForKey(dataKey));
         });
     }
 
-    public updateState(newState: Partial<IPlayerData>) {
-        this.sharedStore.set(playerStateKey, { ...this.getState(), ...newState });
+    public updateDataStore(dataKey: DataStoreKeys, value: any) {
+        // console.log(` Updating ${dataKey.toString()}${value}`);
+        this.sharedStore.set(dataKey.toString(), value);
     }
 
-    public setState(newState: IPlayerData) {
-        this.sharedStore.set(playerStateKey, newState);
-    }
-
-    public getState(): IPlayerData {
-        return this.sharedStore.get(playerStateKey);
+    public getDataForKey(dataKey: DataStoreKeys) {
+        return this.sharedStore.get(dataKey.toString());
     }
 
     public onSignal = (listener: (payload: ITimeSignalPayload) => void) => {
@@ -74,7 +67,7 @@ export class DataStore extends EventEmitter {
     };
 
     public updatePlayerStateTime = playerState => {
-        const value: IPlayerData = { ...this.getState() };
+        const currPlayerState: PlayerState = this.getDataForKey(DataStoreKeys.playerState);
         // console.log('New state : [' + playerState.playerState +',' + playerState.timeInMedia + value.lastTimeInMedia + ']')
 
         this.runtime.submitSignal(playerTimeInMediaKey, {
@@ -82,12 +75,11 @@ export class DataStore extends EventEmitter {
             isManualSeek: playerState?.isManualSeek || false,
         });
 
-        if (value.playerState !== playerState.playerState) {
-            value.playerState = playerState.playerState;
+        if (currPlayerState !== playerState.playerState) {
             if (playerState.playerState === PlayerState.PAUSED) {
-                value.lastTimeInMedia = playerState.timeInMedia;
+                this.updateDataStore(DataStoreKeys.lastTimeInMedia, playerState.timeInMedia);
             }
-            this.setState(value);
+            this.updateDataStore(DataStoreKeys.playerState, playerState.playerState);
         }
     };
 }

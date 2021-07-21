@@ -30,7 +30,6 @@ export class CoPlayer extends DataObject implements IFluidHTMLView {
 
     protected async hasInitialized() {
         if (this.dataStore === undefined) this.dataStore = new DataStore(this.root, this.runtime);
-        this.dataStore.listenToDataChange();
     }
 
     /**

@@ -3,7 +3,7 @@ import ReactPlayer from "react-player";
 import classNames from "classnames";
 import { requestFullScreenOnElement, exitFullScreen } from "../../utils/Utils";
 import { PlayerState } from "../../definitions";
-import { DataStore, IPlayerData, ITimeSignalPayload } from "../../model/DataStore";
+import { DataStore, DataStoreKeys, ITimeSignalPayload } from "../../model/DataStore";
 import { PlayerControls } from "./PlayerControl";
 
 // eslint-disable-next-line import/no-unassigned-import
@@ -29,34 +29,37 @@ export class MediaPlayer extends React.Component<IMediaPlayerProps, IMediaPlayer
     constructor(props: IMediaPlayerProps) {
         super(props);
 
-        const newState: IPlayerData = this.props.dataStore.getState();
-
         this.state = {
-            playerIsLoaded: newState.playerIsLoaded,
-            playerIsMaximized: newState.playerIsMaximized,
-            playerIsMuted: newState.playerIsMuted,
-            playerState: newState.playerState,
-            timeInMedia: newState.lastTimeInMedia || 0,
+            playerIsLoaded: props.dataStore.getDataForKey(DataStoreKeys.playerIsLoaded),
+            playerIsMaximized: props.dataStore.getDataForKey(DataStoreKeys.playerIsMaximized),
+            playerIsMuted: props.dataStore.getDataForKey(DataStoreKeys.playerIsMuted),
+            playerState: props.dataStore.getDataForKey(DataStoreKeys.playerState),
+            timeInMedia: props.dataStore.getDataForKey(DataStoreKeys.lastTimeInMedia) || 0,
         };
     }
 
     componentDidMount() {
-        this.props.dataStore.on("playerStateChanged", (newState: IPlayerData) => {
-            this.setState({
-                playerIsLoaded: newState.playerIsLoaded,
-                playerIsMaximized: newState.playerIsMaximized,
-                playerIsMuted: newState.playerIsMuted,
-                playerState: newState.playerState,
-            });
-            if (newState.playerState === PlayerState.PAUSED && newState.lastTimeInMedia) {
-                this.setState({ timeInMedia: newState.lastTimeInMedia });
-            }
+        this.props.dataStore.onDataChange((dataKey: DataStoreKeys, value: any) => {
+            // console.log(`Shared state changed ${dataKey}${value}`);
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            this.setState({ [dataKey.toString()]: value } as Pick<
+                IMediaPlayerState,
+                keyof IMediaPlayerState
+            >);
+
+            if (
+                dataKey === DataStoreKeys.playerState &&
+                value === PlayerState.PAUSED &&
+                this.props.dataStore.getDataForKey(DataStoreKeys.lastTimeInMedia)
+            )
+                this.setState({
+                    timeInMedia: this.props.dataStore.getDataForKey(DataStoreKeys.lastTimeInMedia),
+                });
         });
         this.props.dataStore.onSignal((payload: ITimeSignalPayload) => {
             if (payload.isManualSeek || this.state.timeInMedia <= payload.timeInMedia)
                 this.setState({ timeInMedia: payload.timeInMedia });
-            // else
-            //     console.log('Got a loser SIGNAL' + payload.timeInMedia+ payload.isManualSeek);
+            else console.log(`Got a loser SIGNAL${payload.timeInMedia}${payload.isManualSeek}`);
         });
     }
 
@@ -81,7 +84,10 @@ export class MediaPlayer extends React.Component<IMediaPlayerProps, IMediaPlayer
     };
 
     togglePlayerMutedState = () => {
-        this.props.dataStore.updateState({ playerIsMuted: !this.state.playerIsMuted });
+        this.props.dataStore.updateDataStore(
+            DataStoreKeys.playerIsMuted,
+            !this.state.playerIsMuted
+        );
     };
 
     onPlayerStateUpdateProposal = newState => {
@@ -95,7 +101,10 @@ export class MediaPlayer extends React.Component<IMediaPlayerProps, IMediaPlayer
             requestFullScreenOnElement(mediaPlayerElem);
         }
 
-        this.props.dataStore.updateState({ playerIsMaximized: !playerCurrentlyMaximized });
+        this.props.dataStore.updateDataStore(
+            DataStoreKeys.playerIsMaximized,
+            !playerCurrentlyMaximized
+        );
     };
 
     render() {
@@ -116,7 +125,7 @@ export class MediaPlayer extends React.Component<IMediaPlayerProps, IMediaPlayer
                     playing={mediaIsPlaying}
                     ref={e => (this.mediaPlayer = e)}
                     onReady={() => {
-                        this.props.dataStore.updateState({ playerIsLoaded: true });
+                        this.props.dataStore.updateDataStore(DataStoreKeys.playerIsLoaded, true);
                         // console.log('Player is ready')
                     }}
                     onPlay={() => {
