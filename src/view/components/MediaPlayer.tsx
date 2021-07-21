@@ -21,7 +21,7 @@ export interface IMediaPlayerState {
     timeInMedia: number;
 }
 
-const outOfSyncTolerance = 2; // Seconds
+const outOfSyncTolerance = 1.5; // Seconds
 
 export class MediaPlayer extends React.Component<IMediaPlayerProps, IMediaPlayerState> {
     private mediaPlayer: ReactPlayer;
@@ -40,7 +40,7 @@ export class MediaPlayer extends React.Component<IMediaPlayerProps, IMediaPlayer
 
     componentDidMount() {
         this.props.dataStore.onDataChange((dataKey: DataStoreKeys, value: any) => {
-            // console.log(`Shared state changed ${dataKey}${value}`);
+            console.log(`Shared state changed ${dataKey}${value}`);
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             this.setState({ [dataKey.toString()]: value } as Pick<
                 IMediaPlayerState,
@@ -56,7 +56,7 @@ export class MediaPlayer extends React.Component<IMediaPlayerProps, IMediaPlayer
                     timeInMedia: this.props.dataStore.getDataForKey(DataStoreKeys.lastTimeInMedia),
                 });
         });
-        this.props.dataStore.onSignal((payload: ITimeSignalPayload) => {
+        this.props.dataStore.onTimeInMediaSignal((payload: ITimeSignalPayload) => {
             if (payload.isManualSeek || this.state.timeInMedia <= payload.timeInMedia)
                 this.setState({ timeInMedia: payload.timeInMedia });
             else console.log(`Got a loser SIGNAL${payload.timeInMedia}${payload.isManualSeek}`);

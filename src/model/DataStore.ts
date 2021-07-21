@@ -56,7 +56,7 @@ export class DataStore extends EventEmitter {
         return this.sharedStore.get(dataKey.toString());
     }
 
-    public onSignal = (listener: (payload: ITimeSignalPayload) => void) => {
+    public onTimeInMediaSignal = (listener: (payload: ITimeSignalPayload) => void) => {
         this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             if (message.type === playerTimeInMediaKey) {
                 const payload: ITimeSignalPayload = message.content;
